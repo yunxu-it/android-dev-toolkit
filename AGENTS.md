@@ -1,0 +1,21 @@
+# ADT 开发规范
+
+- 产品输出保持英文，README 提供完整中英文版本。
+- 当前能力与后续范围见 docs/roadmap.md；不要提前创建后续阶段的空模块或占位命令。
+- Python 3.12+，src layout，uv 管理依赖并提交 uv.lock；CLI 使用 Typer/Rich，M2 再引入 Textual。
+- core 不导入 CLI/TUI；未来两个入口共享 DeviceService。只有 core/adb_runner.py 调用 subprocess。
+- 使用 argv 数组、shell=False、有限超时及安全解码；禁止执行任意 shell 字符串、eval/exec、自动下载 ADB。
+- 每次设备查询重新发现状态；只自动选择唯一在线设备；指定设备失联或不可用时失败，不切换到其他设备。
+- 不引入遥测，不持久化实际设备信息，不写入真实序列号、业务包名或凭据；示例使用虚构信息。
+- M1 显式路径使用全局 --adb-path；默认设备持久化与 TOML 配置留到 M3，见 docs/decisions/0001-m1-scope.md。
+- Windows 首次运行 install.ps1，日常运行 adt 进入逐行菜单；完整 Textual TUI 从 M2 开始。
+- 仅无参数且 stdin/stdout 都为 TTY 时启动交互；直接子命令和 JSON 输出不得提示输入。交互选择设备后必须重新验证状态。
+- 安装脚本只管理 uv/ADT 依赖和命令路径；持久修改用户 PATH 前询问，不改系统 PATH，不自动下载 ADB。
+- 修改前检查 git 状态及 .gitattributes；保持 UTF-8 无 BOM、LF，不改无关文件，不添加多余空行。
+- 新增公共 API 必须有类型标注；复杂逻辑添加必要中文注释；不为未来需求创建通用包装层。
+- 单元测试覆盖可观察行为；可 Mock ADB，必须保留实际子进程执行/超时测试。测试必须隔离宿主 SDK 和真实手机。
+- 检查命令为 uv run pytest、uv run ruff check .、uv run ruff format --check . 和 uv run mypy；失败先分析原因，不盲目重复。
+- 每阶段维护 README、CHANGELOG、roadmap；区分自动化验证、真实 ADB/设备验证及未验证平台。
+- 根目录只放常用入口、包配置和开源必需文件；公开文档从 docs/README.md 导航，不提交内部任务书和本机执行记录。
+- pytest/Ruff/mypy 缓存统一放 .adt-local/cache/，uv 缓存与本地安装验收产物也收在 .adt-local/；不改 .git、.github、.venv 的标准位置。
+- 不提交或推送，除非用户明确要求。提交格式：<类型>(<模块>): <中文祈使句摘要>。

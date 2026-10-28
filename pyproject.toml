@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.33,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "android-dev-toolkit"
+version = "0.1.0"
+description = "A local, device-aware Android debugging CLI"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = ["typer>=0.27.3,<0.28", "rich>=15,<16"]
+
+[project.scripts]
+adt = "adt.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=9.2,<10", "ruff>=0.17.3,<0.18", "mypy>=2.4,<3"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/adt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+cache_dir = ".adt-local/cache/pytest"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [".adt-local"]
+cache-dir = ".adt-local/cache/ruff"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/adt"]
+cache_dir = ".adt-local/cache/mypy"

@@ -1,0 +1,45 @@
+# Local environments, caches and acceptance installs
+.venv/
+.adt-local/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Build and test output
+.coverage
+.coverage.*
+coverage.xml
+junit.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+*.whl
+
+# Local secrets and Android artifacts; commit only fictitious examples
+.env
+.env.*
+!.env.example
+!.env.*.example
+.android/
+adbkey
+adbkey.pub
+*.jks
+*.keystore
+*.p12
+*.pfx
+local.properties
+*.apk
+*.apks
+*.aab
+logs/
+*.log
+
+# Editor and OS-local files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
