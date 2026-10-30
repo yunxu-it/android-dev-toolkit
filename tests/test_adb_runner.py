@@ -1,12 +1,14 @@
 import subprocess
 import sys
 from pathlib import Path
+from threading import Event, Timer
 from unittest.mock import Mock
 
 import pytest
 
 from adt.core.adb_runner import AdbRunner
 from adt.core.errors import (
+    AdbCancelledError,
     AdbCommandError,
     AdbTimeoutError,
     AdbUnavailableError,
@@ -114,3 +116,58 @@ def test_real_subprocess_timeout(tmp_path):
         AdbRunner(Path(sys.executable), timeout=1).run([str(script)])
     assert failure.value.result.returncode is None
     assert "started" in failure.value.result.stdout
+
+
+def test_pre_cancelled_query_does_not_start_process(monkeypatch):
+    stop = Event()
+    stop.set()
+    process = Mock()
+    monkeypatch.setattr(subprocess, "Popen", process)
+    with pytest.raises(AdbCancelledError):
+        AdbRunner(Path("adb"), cancel_event=stop).run(["devices"])
+    process.assert_not_called()
+
+
+@pytest.mark.parametrize("cancel", [False, True])
+def test_cancellable_query_reaps_real_child(tmp_path, monkeypatch, cancel):
+    script = tmp_path / "fake_adb.py"
+    script.write_text(
+        "import time\nprint('started', flush=True)\ntime.sleep(30)\n", encoding="utf-8"
+    )
+    processes = []
+    original = subprocess.Popen
+
+    def capture(*args, **kwargs):
+        process = original(*args, **kwargs)
+        processes.append(process)
+        return process
+
+    monkeypatch.setattr(subprocess, "Popen", capture)
+    stop = Event()
+    timer = Timer(1, stop.set)
+    if cancel:
+        timer.start()
+    try:
+        expected = AdbCancelledError if cancel else AdbTimeoutError
+        with pytest.raises(expected) as failure:
+            AdbRunner(Path(sys.executable), timeout=10 if cancel else 1, cancel_event=stop).run(
+                [str(script)]
+            )
+        assert "started" in failure.value.result.stdout
+        assert failure.value.result.returncode is None
+        assert processes[0].poll() is not None
+    finally:
+        timer.cancel()
+        if cancel:
+            timer.join()
+
+
+def test_cancellable_query_keeps_nonzero_and_encoding_errors(tmp_path):
+    script = tmp_path / "fake_adb.py"
+    script.write_text(
+        "import sys\nsys.stdout.buffer.write(b'partial\\xff')\nsys.exit(7)\n", encoding="utf-8"
+    )
+    with pytest.raises(AdbCommandError) as failure:
+        AdbRunner(Path(sys.executable), cancel_event=Event()).run([str(script)])
+    assert failure.value.result.returncode == 7
+    assert failure.value.result.stdout == "partial\ufffd"

@@ -23,5 +23,11 @@ class AdbTimeoutError(AdtError):
     exit_code = 5
 
 
+class AdbCancelledError(AdtError):
+    """A user cancelled a finite ADB query after its child process was reaped."""
+
+    exit_code = 130
+
+
 class AdbCommandError(AdtError):
     """ADB executed but returned an unsuccessful status."""

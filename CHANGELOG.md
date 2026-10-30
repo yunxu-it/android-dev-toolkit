@@ -2,11 +2,15 @@
 
 ## Unreleased
 
+- M2: replace the line-based menu with a full-screen Textual dashboard, device list,
+  device details and diagnostics with a session-only ADB path field.
+- Add keyboard navigation, three-second state refresh, loading/error/empty states,
+  stale-selection invalidation and cancellable background queries with child cleanup.
+- Preserve direct CLI/JSON commands and add Pilot coverage for full-screen interaction.
 - Add a one-command Windows installer with automatic runtime setup and opt-in user PATH update.
-- Start a line-based menu with `adt` in a terminal; prompt for missing ADB paths and device selection.
-- Keep routine menu results compact; color headings/device states and retain plain text accessibility.
-- Keep direct commands/JSON noninteractive, revalidate devices after selection and recover to the menu.
-- Preserve the M1 boundary: no Textual dependency, full-screen TUI or persisted device/config state.
+- Keep routine device results compact, with colored states and readable status text.
+- Keep direct commands/JSON noninteractive and revalidate explicitly selected device targets.
+- Keep device/config persistence and project/app/script operations deferred to M3+.
 - Consolidate development artifacts under .adt-local and add a public documentation index.
 
 ## 0.1.0 — 2026-10-28

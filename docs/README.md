@@ -1,7 +1,8 @@
 # 文档索引 / Documentation
 
 日常使用只需阅读 [中文 README](../README.zh-CN.md) 或 [English README](../README.md)。
-Windows 首次在根目录运行 `./install.ps1`，之后输入 `adt`，按数字操作。
+Windows 首次在根目录运行 `./install.ps1`，之后输入 `adt` 打开全屏终端界面。
+使用侧栏或 `1/2/3` 导航，设备列表用 ↑/↓ 和 Enter，`r` 刷新，Esc 返回/取消，`q` 退出。
 
 ## 使用与设计
 

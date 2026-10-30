@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
-dependencies = ["typer>=0.27.3,<0.28", "rich>=15,<16"]
+dependencies = ["typer>=0.27.3,<0.28", "rich>=15,<16", "textual>=8.2.8,<9"]
 
 [project.scripts]
 adt = "adt.cli:app"

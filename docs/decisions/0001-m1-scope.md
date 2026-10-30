@@ -14,7 +14,7 @@ Similarly, explicit ADB configuration is supplied by the global --adb-path optio
 until TOML is introduced. Invalid explicit paths fail rather than silently switching
 SDKs; invalid environment candidates can fall through with diagnostic reasons.
 
-No-argument adt opens a line-based CLI menu when attached to a terminal. Windows
-install.ps1 provides one-time setup; redirected invocations still show help.
-Textual, its dependency and full-screen entrypoint remain M2. No TUI scaffolding or
-persistent ADB/device configuration is introduced.
+M1 used a line-based CLI menu. M2 replaces it with a full-screen Textual interface
+sharing the same core services. Windows install.ps1 still provides one-time setup;
+redirected invocations show help. Device selection and optional ADB paths remain
+session-only; no persistent ADB/device configuration is introduced before M3.

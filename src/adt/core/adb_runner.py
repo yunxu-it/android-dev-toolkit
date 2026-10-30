@@ -4,9 +4,12 @@ import math
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
+from threading import Event
 from time import perf_counter
+from typing import cast
 
 from adt.core.errors import (
+    AdbCancelledError,
     AdbCommandError,
     AdbTimeoutError,
     AdbUnavailableError,
@@ -23,11 +26,51 @@ def decode_output(value: bytes | str | None) -> str:
 
 
 class AdbRunner:
-    def __init__(self, adb_path: Path, *, timeout: float = 10.0) -> None:
+    def __init__(
+        self, adb_path: Path, *, timeout: float = 10.0, cancel_event: Event | None = None
+    ) -> None:
         if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("Timeout must be a finite positive number.")
         self.adb_path = adb_path
         self.timeout = timeout
+        self.cancel_event = cancel_event
+
+    def _run_cancellable(
+        self, argv: tuple[str, ...], limit: float, cwd: Path | None, start: float
+    ) -> subprocess.CompletedProcess[bytes]:
+        """可取消路径轮询 communicate，取消或超时后终止并回收子进程。"""
+        assert self.cancel_event is not None
+        if self.cancel_event.is_set():
+            raise AdbCancelledError("ADB query cancelled.")
+        with subprocess.Popen(
+            argv, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd
+        ) as process:
+            while True:
+                cancelled = self.cancel_event.is_set()
+                remaining = limit - (perf_counter() - start)
+                if cancelled or remaining <= 0:
+                    process.kill()
+                    stdout, stderr = process.communicate()
+                    if cancelled:
+                        raise AdbCancelledError(
+                            "ADB query cancelled.",
+                            result=CommandResult(
+                                argv,
+                                None,
+                                decode_output(stdout),
+                                decode_output(stderr),
+                                (perf_counter() - start) * 1000,
+                            ),
+                        )
+                    raise subprocess.TimeoutExpired(argv, limit, stdout, stderr)
+                try:
+                    stdout, stderr = process.communicate(timeout=min(0.1, remaining))
+                except subprocess.TimeoutExpired:
+                    continue
+                # communicate 已等待子进程结束，returncode 此时必为 int。
+                return subprocess.CompletedProcess(
+                    argv, cast(int, process.returncode), stdout, stderr
+                )
 
     def run(
         self,
@@ -44,9 +87,12 @@ class AdbRunner:
         argv = (str(self.adb_path), *(("-s", serial) if serial is not None else ()), *args)
         start = perf_counter()
         try:
-            completed = subprocess.run(
-                argv, shell=False, capture_output=True, timeout=limit, cwd=cwd
-            )
+            if self.cancel_event is None:
+                completed = subprocess.run(
+                    argv, shell=False, capture_output=True, timeout=limit, cwd=cwd
+                )
+            else:
+                completed = self._run_cancellable(argv, limit, cwd, start)
         except subprocess.TimeoutExpired as exc:
             result = CommandResult(
                 argv,

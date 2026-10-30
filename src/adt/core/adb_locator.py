@@ -5,9 +5,10 @@ import shutil
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from threading import Event
 
 from adt.core.adb_runner import AdbRunner
-from adt.core.errors import AdbUnavailableError, AdtError
+from adt.core.errors import AdbCancelledError, AdbUnavailableError, AdtError
 from adt.core.models import CommandResult
 
 DOWNLOAD_URL = "https://developer.android.com/tools/releases/platform-tools"
@@ -34,10 +35,12 @@ class AdbLocator:
         *,
         environ: Mapping[str, str] | None = None,
         timeout: float = 10.0,
+        cancel_event: Event | None = None,
     ) -> None:
         self.explicit_path = explicit_path
         self.environ = os.environ if environ is None else environ
         self.timeout = timeout
+        self.cancel_event = cancel_event
 
     def candidates(self) -> tuple[AdbCandidate, ...]:
         executable = "adb.exe" if os.name == "nt" else "adb"
@@ -61,11 +64,15 @@ class AdbLocator:
             try:
                 if not path.is_file() or not os.access(path, os.X_OK):
                     raise AdbUnavailableError("File is missing or not executable.")
-                version = AdbRunner(path.resolve(), timeout=self.timeout).run(["version"])
+                version = AdbRunner(
+                    path.resolve(), timeout=self.timeout, cancel_event=self.cancel_event
+                ).run(["version"])
                 if "Android Debug Bridge version" not in version.stdout:
                     raise AdbUnavailableError(
                         "Executable did not identify itself as Android Debug Bridge."
                     )
+            except AdbCancelledError:
+                raise
             except (AdtError, OSError) as exc:
                 rejected.append(f"{candidate.source}: {path}: {exc}")
                 if isinstance(exc, AdtError) and exc.result is not None:

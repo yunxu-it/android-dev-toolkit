@@ -3,10 +3,10 @@
 [简体中文](README.zh-CN.md) · MIT · Python 3.12+
 
 A local Android debugging CLI, designed for Windows PowerShell / Windows Terminal
-and compatible by design with macOS/Linux. **M0 + M1 only**: working ADB discovery,
+and compatible by design with macOS/Linux. **M0–M2**: working ADB discovery,
 diagnostics, device listing and read-only device properties. No account, telemetry,
-log uploads or private services. `adt` opens a simple terminal menu; the full-screen
-Textual TUI starts at M2.
+log uploads or private services. `adt` opens a full-screen Textual interface with a
+dashboard, device list, device details and diagnostics. Direct CLI commands remain available.
 
 ## Install
 
@@ -32,11 +32,17 @@ After setup, from any directory:
 adt
 ```
 
-Choose `1` (or Enter) for devices, `2` for details, `3` for environment diagnostics,
-or `0` to quit. A unique online device is automatic; several online devices produce
-a numbered selection. If ADB cannot be found, the menu asks for its executable path.
-That path stays in the session only. Failed operations return to the menu; Ctrl+C
-or end of input exits. Only real operations are offered.
+Use the sidebar with ↑/↓ and Enter, or `1` for Dashboard, `2` for Devices and `3` for
+Diagnostics. In Devices, select a row and press Enter for details. `r` refreshes,
+Esc cancels a pending query or returns to the previous view, and `q` / Ctrl+C quits.
+Tab changes focus; buttons are also available. Normal full-screen mode is used on
+Windows; no inline mode is required.
+
+Device states refresh every three seconds without blocking navigation. A disconnected
+or unavailable selected target clears its old details and never selects another phone.
+Cancel pauses automatic refresh until a manual refresh or new selection. Exit terminates
+and reaps pending ADB queries. Missing ADB does not prevent opening the interface: use
+Diagnostics to supply its executable path and apply it for this session only.
 
 Install official [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)
 separately if missing. ADT never downloads ADB. Enable USB debugging on the phone,
@@ -73,7 +79,7 @@ uv run adt --timeout 20 device info --serial demo-device
 
 Global options go **before** the command; `--serial` goes after `device info`.
 Only a unique online (`device`) target is selected automatically. Multiple online
-devices require `--serial` in direct commands; the no-argument menu asks you to choose.
+devices require `--serial` in direct commands; the TUI uses explicit row selection.
 Offline, unauthorized and missing targets fail with
 actionable messages, and an explicit missing target never falls back to another
 device. Every call refreshes the list. `device use` and persisted configuration
@@ -83,9 +89,9 @@ Device details use `adb -s SERIAL shell getprop` and display manufacturer/model,
 Android version, API level, state and transport. Missing properties are `N/A`;
 transport is only inferred from a USB descriptor, emulator serial or reliable
 network endpoint. Failure is reported with its cause. Human output includes the
-actual argv, exit code, duration and captured output. The menu shows compact results
-with colored headings/states; command diagnostics are available under Check environment.
-It honors `NO_COLOR` and keeps states readable as text. Invalid UTF-8 bytes are
+actual argv, exit code, duration and captured output. The TUI keeps routine results compact;
+command output and candidate ADB paths are available in Diagnostics. CLI colors honor
+`NO_COLOR`, and device states remain readable as text. Invalid UTF-8 bytes are
 replaced with U+FFFD so diagnostics do not crash.
 
 `devices --json` writes exactly one JSON object to stdout:
@@ -110,7 +116,7 @@ device identifiers: review it before sharing. ADT does not save or upload it.
 Queries default to a finite 10-second timeout per subprocess, configurable by
 `--timeout`. Version probe failures, including probe timeouts, mean ADB is unusable
 and return 3. Ctrl+C uses the CLI's standard interruption behavior. There are no
-streaming subprocesses in M1. Redirected no-argument invocations print help rather
+streaming subprocesses. Redirected no-argument invocations print help rather
 than prompting. Direct commands never prompt, including when attached to a terminal.
 
 ## Develop and contribute
@@ -124,7 +130,9 @@ uv run mypy
 ```
 
 Tests isolate the host SDK and phone, mock ADB responses, and also run real Python
-subprocesses to verify output decoding, nonzero exits and timeout cleanup.
+subprocesses to verify output decoding, nonzero exits, timeout and cancellation cleanup.
+Textual Pilot tests cover navigation, empty/error states, refresh, selection, stale
+results and responsive cancellation/exit without requiring a real phone.
 GitHub Actions covers Windows/Ubuntu with Python 3.12 and 3.14. CI results on the
 remote service must be checked after publication; local checks do not prove them.
 macOS is not yet in CI. Hardware states such as authorization, disconnection and
@@ -139,8 +147,8 @@ commit credentials, business identifiers or real serials. Avoid unrelated change
 new dependencies without agreement, and speculative abstractions. Add tests for
 observable behavior and update both READMEs/CHANGELOG for public changes.
 
-MIT applies to ADT. Runtime dependencies are Typer and Rich; Textual is deferred
-until M2. Development/build dependencies include pytest, Ruff, mypy and Hatchling.
+MIT applies to ADT. Runtime dependencies are Typer, Rich and Textual.
+Development/build dependencies include pytest, Ruff, mypy and Hatchling.
 See [dependency review](docs/dependencies.md) for metadata and license review.
 
 See the [documentation index](docs/README.md) for the project layout and all guides.
@@ -149,6 +157,6 @@ Generated caches and local acceptance installs belong in `.adt-local/`; `.git`,
 
 ## Scope
 
-M2: Textual TUI. M3: projects, TOML, saved device selection and app/GA commands.
+M2 provides the device TUI. M3: projects, TOML, saved device selection and app/GA commands.
 M4: structured YAML workflows. M5: packaging and release polish. None of those
 features is exposed as an inactive command or page in this version.

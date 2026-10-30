@@ -1,12 +1,13 @@
 import os
 import subprocess
 from pathlib import Path
+from threading import Event
 from unittest.mock import Mock
 
 import pytest
 
 from adt.core.adb_locator import AdbLocator
-from adt.core.errors import AdbUnavailableError
+from adt.core.errors import AdbCancelledError, AdbUnavailableError
 
 
 def sdk(tmp_path, name):
@@ -90,6 +91,13 @@ def test_version_timeout(fake_adb, monkeypatch):
     monkeypatch.setattr(subprocess, "run", Mock(side_effect=subprocess.TimeoutExpired("adb", 1)))
     with pytest.raises(AdbUnavailableError, match="timed out"):
         AdbLocator(fake_adb.path, environ={}, timeout=1).locate()
+
+
+def test_version_cancellation_is_not_reported_as_missing_adb(fake_adb):
+    stop = Event()
+    stop.set()
+    with pytest.raises(AdbCancelledError):
+        AdbLocator(fake_adb.path, environ={}, cancel_event=stop).locate()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX executable permission bits")

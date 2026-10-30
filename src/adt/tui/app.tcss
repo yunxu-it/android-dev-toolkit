@@ -1,0 +1,76 @@
+Screen {
+    background: $background;
+}
+#workspace {
+    height: 1fr;
+}
+#sidebar {
+    width: 21;
+    padding: 1;
+    background: $panel;
+    border-right: solid $primary-background;
+}
+#navigation {
+    height: auto;
+    border: none;
+    background: transparent;
+}
+#keyboard-help {
+    margin-top: 2;
+    color: $text-muted;
+}
+#main {
+    width: 1fr;
+    padding: 0 1;
+}
+#page-title {
+    text-style: bold;
+    color: $accent;
+    height: 1;
+}
+#device-context {
+    color: $text-muted;
+    height: 1;
+}
+#toolbar {
+    height: 3;
+}
+#toolbar Button {
+    margin-right: 1;
+    min-width: 10;
+}
+#loading {
+    width: 8;
+}
+#status {
+    height: auto;
+    max-height: 3;
+    color: $success;
+    margin-bottom: 1;
+}
+#status.error {
+    color: $error;
+}
+#pages {
+    height: 1fr;
+}
+#device-table {
+    height: 1fr;
+}
+#device-details, #diagnostic-output, #summary, .hint {
+    margin-bottom: 1;
+}
+.section-title {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+.hint {
+    color: $text-muted;
+}
+#adb-path {
+    margin: 1 0;
+}
+#apply-path {
+    margin-bottom: 1;
+}

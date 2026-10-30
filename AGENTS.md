@@ -2,14 +2,16 @@
 
 - 产品输出保持英文，README 提供完整中英文版本。
 - 当前能力与后续范围见 docs/roadmap.md；不要提前创建后续阶段的空模块或占位命令。
-- Python 3.12+，src layout，uv 管理依赖并提交 uv.lock；CLI 使用 Typer/Rich，M2 再引入 Textual。
+- Python 3.12+，src layout，uv 管理依赖并提交 uv.lock；CLI 使用 Typer/Rich，TUI 使用 Textual。
 - core 不导入 CLI/TUI；未来两个入口共享 DeviceService。只有 core/adb_runner.py 调用 subprocess。
 - 使用 argv 数组、shell=False、有限超时及安全解码；禁止执行任意 shell 字符串、eval/exec、自动下载 ADB。
 - 每次设备查询重新发现状态；只自动选择唯一在线设备；指定设备失联或不可用时失败，不切换到其他设备。
 - 不引入遥测，不持久化实际设备信息，不写入真实序列号、业务包名或凭据；示例使用虚构信息。
 - M1 显式路径使用全局 --adb-path；默认设备持久化与 TOML 配置留到 M3，见 docs/decisions/0001-m1-scope.md。
-- Windows 首次运行 install.ps1，日常运行 adt 进入逐行菜单；完整 Textual TUI 从 M2 开始。
-- 仅无参数且 stdin/stdout 都为 TTY 时启动交互；直接子命令和 JSON 输出不得提示输入。交互选择设备后必须重新验证状态。
+- Windows 首次运行 install.ps1，日常运行 adt 进入全屏 Textual TUI；当前止于 M2，不提前增加 M3+ 页面。
+- 仅无参数且 stdin/stdout 都为 TTY 时启动 TUI；直接子命令和 JSON 输出不得提示输入。交互选择设备后必须重新验证状态。
+- TUI 通过 worker 在线程中调用共享服务；取消和退出必须设置取消事件、终止并回收子进程，过期结果不能更新界面。
+- 查询失败或设备断开立即清空旧详情，不自动改选其它设备；仅会话内保存选择和 ADB 路径，配置持久化留到 M3。
 - 安装脚本只管理 uv/ADT 依赖和命令路径；持久修改用户 PATH 前询问，不改系统 PATH，不自动下载 ADB。
 - 修改前检查 git 状态及 .gitattributes；保持 UTF-8 无 BOM、LF，不改无关文件，不添加多余空行。
 - 新增公共 API 必须有类型标注；复杂逻辑添加必要中文注释；不为未来需求创建通用包装层。
